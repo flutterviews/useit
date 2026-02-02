@@ -8,17 +8,9 @@ part 'app_state.dart';
 
 /// Cubit for managing app-wide state (theme, locale)
 class AppCubit extends Cubit<AppState> {
-  AppCubit({
-    required IStorageService storageService,
-    ThemeMode? themeMode,
-    Locale? locale,
-  })  : _storageService = storageService,
-        super(
-        AppState(
-          themeMode: themeMode ?? ThemeMode.system,
-          locale: locale ?? Localization.uz,
-        ),
-      );
+  AppCubit({required IStorageService storageService, ThemeMode? themeMode, Locale? locale})
+    : _storageService = storageService,
+      super(AppState(themeMode: themeMode ?? ThemeMode.system, locale: locale ?? Localization.uz));
 
   final IStorageService _storageService;
 
@@ -43,12 +35,7 @@ class AppCubit extends Cubit<AppState> {
       final themeModeStr = results[1];
 
       // Parse and emit new state
-      emit(
-        state.copyWith(
-          locale: _parseLocale(localeCode),
-          themeMode: _parseThemeMode(themeModeStr),
-        ),
-      );
+      emit(state.copyWith(locale: _parseLocale(localeCode), themeMode: _parseThemeMode(themeModeStr)));
 
       LogService.i('App state initialized: locale=$localeCode, theme=$themeModeStr');
     } catch (e, s) {
@@ -58,16 +45,22 @@ class AppCubit extends Cubit<AppState> {
     }
   }
 
-  /// Parse locale from string
+  /// Parse locale from string - KIRILL SUPPORT
   Locale? _parseLocale(String? code) {
     if (code == null) return null;
 
     try {
-      // Check if locale is supported
+      // Kirill tekshirish
+      if (code == 'uz_Cyrl') {
+        return const Locale.fromSubtags(languageCode: 'uz', scriptCode: 'Cyrl');
+      }
+
+      // Oddiy locale
       final locale = Locale(code);
       if (Localization.all.any((l) => l.languageCode == code)) {
         return locale;
       }
+
       LogService.w('Unsupported locale code: $code, using default');
       return null;
     } catch (e) {
@@ -81,10 +74,7 @@ class AppCubit extends Cubit<AppState> {
     if (mode == null) return ThemeMode.system;
 
     try {
-      return ThemeMode.values.firstWhere(
-            (e) => e.name == mode,
-        orElse: () => ThemeMode.system,
-      );
+      return ThemeMode.values.firstWhere((e) => e.name == mode, orElse: () => ThemeMode.system);
     } catch (e) {
       LogService.e('Failed to parse theme mode: $e');
       return ThemeMode.system;
@@ -108,13 +98,16 @@ class AppCubit extends Cubit<AppState> {
     }
   }
 
-  /// Change locale and persist to storage
+  /// Change locale and persist to storage - KIRILL SUPPORT
   Future<void> changeLocale(Locale locale) async {
     if (isClosed) return;
 
+    // Locale'ni string'ga o'zgartirish
+    final localeCode = _localeToString(locale);
+
     // Validate locale
-    if (!Localization.all.any((l) => l.languageCode == locale.languageCode)) {
-      LogService.w('Attempted to set unsupported locale: ${locale.languageCode}');
+    if (!_isValidLocale(locale)) {
+      LogService.w('Attempted to set unsupported locale: $localeCode');
       return;
     }
 
@@ -123,12 +116,31 @@ class AppCubit extends Cubit<AppState> {
 
     // Persist to storage
     try {
-      await _storageService.setString(_localeKey, locale.languageCode);
-      LogService.i('Locale changed to: ${locale.languageCode}');
+      await _storageService.setString(_localeKey, localeCode);
+      LogService.i('Locale changed to: $localeCode');
     } catch (e, s) {
       LogService.e('Failed to save locale: $e');
       LogService.e('Stack trace: $s');
     }
+  }
+
+  /// Locale'dan string yaratish
+  String _localeToString(Locale locale) {
+    if (locale.scriptCode != null) {
+      return '${locale.languageCode}_${locale.scriptCode}';
+    }
+    return locale.languageCode;
+  }
+
+  /// Locale validatsiya
+  bool _isValidLocale(Locale locale) {
+    // Kirill tekshirish
+    if (locale.languageCode == 'uz' && locale.scriptCode == 'Cyrl') {
+      return true;
+    }
+
+    // Oddiy tekshirish
+    return Localization.all.any((l) => l.languageCode == locale.languageCode);
   }
 
   /// Reset to default settings
@@ -136,19 +148,11 @@ class AppCubit extends Cubit<AppState> {
     if (isClosed) return;
 
     try {
-      await Future.wait([
-        _storageService.remove(_localeKey),
-        _storageService.remove(_themeModeKey),
-      ]);
+      await Future.wait([_storageService.remove(_localeKey), _storageService.remove(_themeModeKey)]);
 
       if (isClosed) return;
 
-      emit(
-        AppState(
-          themeMode: ThemeMode.system,
-          locale: Localization.uz,
-        ),
-      );
+      emit(AppState(themeMode: ThemeMode.system, locale: Localization.uz));
 
       LogService.i('App state reset to defaults');
     } catch (e, s) {

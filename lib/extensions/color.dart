@@ -49,17 +49,21 @@ extension ColorToHex on Color {
   String toHex({bool includeAlpha = true}) {
     if (includeAlpha) {
       return '#${(a * 255.0).round().clamp(0, 255).toRadixString(16).padLeft(2, '0')}'
-          '${(r * 255.0).round().clamp(0, 255).toRadixString(16).padLeft(2, '0')}'
-          '${(g * 255.0).round().clamp(0, 255).toRadixString(16).padLeft(2, '0')}'
-          '${(b * 255.0).round().clamp(0, 255)..toRadixString(16).padLeft(2, '0')}'
+              '${(r * 255.0).round().clamp(0, 255).toRadixString(16).padLeft(2, '0')}'
+              '${(g * 255.0).round().clamp(0, 255).toRadixString(16).padLeft(2, '0')}'
+              '${(b * 255.0).round().clamp(0, 255).toRadixString(16).padLeft(2, '0')}'
           .toUpperCase();
     } else {
-      return '#${(r * 255.0).round().clamp(0, 255)..toRadixString(16).padLeft(2, '0')}'
-          '${(g * 255.0).round().clamp(0, 255)..toRadixString(16).padLeft(2, '0')}'
-          '${(b * 255.0).round().clamp(0, 255)..toRadixString(16).padLeft(2, '0')}'
+      return '#${(r * 255.0).round().clamp(0, 255).toRadixString(16).padLeft(2, '0')}'
+              '${(g * 255.0).round().clamp(0, 255).toRadixString(16).padLeft(2, '0')}'
+              '${(b * 255.0).round().clamp(0, 255).toRadixString(16).padLeft(2, '0')}'
           .toUpperCase();
     }
   }
+
+  /// Deprecated: use withValues(alpha: ...)
+  @Deprecated('Use withValues(alpha: ...) instead')
+  Color withOpacity(double opacity) => withValues(alpha: opacity);
 
   /// Get contrasting color (black or white)
   Color get contrastColor {

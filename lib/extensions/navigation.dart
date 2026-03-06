@@ -56,7 +56,18 @@ extension NavigationExtension on BuildContext {
     }
 
     try {
-      GoRouter.of(this).popUntilNamed(routeName, result);
+      final router = GoRouter.of(this);
+      final routes = [...router.routerDelegate.currentConfiguration.routes];
+
+      for (int i = routes.length - 1; i >= 0; i--) {
+        final route = routes[i];
+        if (route is GoRoute && route.name == routeName) {
+          break;
+        }
+        if (router.canPop()) {
+          router.pop(result);
+        }
+      }
     } catch (e) {
       LogService.e('Pop until named failed: $e');
     }
@@ -64,11 +75,11 @@ extension NavigationExtension on BuildContext {
 
   /// Navigate to named route
   Future<T?> pushNamed<T extends Object?>(
-      String name, {
-        Map<String, String> pathParameters = const {},
-        Map<String, dynamic> queryParameters = const {},
-        Object? extra,
-      }) {
+    String name, {
+    Map<String, String> pathParameters = const {},
+    Map<String, dynamic> queryParameters = const {},
+    Object? extra,
+  }) {
     if (!isMounted) {
       LogService.w('Attempted to push on unmounted context');
       return Future.value(null);
@@ -89,11 +100,11 @@ extension NavigationExtension on BuildContext {
 
   /// Go to named route (replace current route)
   void goNamed(
-      String name, {
-        Map<String, String> pathParameters = const {},
-        Map<String, dynamic> queryParameters = const {},
-        Object? extra,
-      }) {
+    String name, {
+    Map<String, String> pathParameters = const {},
+    Map<String, dynamic> queryParameters = const {},
+    Object? extra,
+  }) {
     if (!isMounted) {
       LogService.w('Attempted to go on unmounted context');
       return;
@@ -113,11 +124,11 @@ extension NavigationExtension on BuildContext {
 
   /// Replace current route with named route
   Future<T?> replaceNamed<T extends Object?>(
-      String name, {
-        Map<String, String> pathParameters = const {},
-        Map<String, dynamic> queryParameters = const {},
-        Object? extra,
-      }) {
+    String name, {
+    Map<String, String> pathParameters = const {},
+    Map<String, dynamic> queryParameters = const {},
+    Object? extra,
+  }) {
     if (!isMounted) {
       LogService.w('Attempted to replace on unmounted context');
       return Future.value(null);
